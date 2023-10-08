@@ -23,6 +23,7 @@
 @endif
     <form action="{{ route('store-profesor') }}" class="row g-3" method="post">
         @csrf
+        @method('POST')
         <div class="container">
             <div class="row">
                 <div class="col-6">

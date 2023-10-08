@@ -212,8 +212,8 @@ class AlumnosController extends Controller
             $division = $request->input('division_p');
             $id_curso = DB::table('cursos')->where('curso', '=', $curso)->where('division', '=', $division)->value('id');
 
-
-
+            $coleccion = $request->collect();
+            return $coleccion;
             //insertar profesor
 
             $profesor = 0;
@@ -227,10 +227,10 @@ class AlumnosController extends Controller
                     'dni' => $dni,
                     'telefono' => $telefono,
                 ]);
+                $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
             }
 
             //insertar Curso - Profesor
-
             $curso_profesor = 0;
             $curso_profesor = DB::table('pivot_cursos_profesores')->where('cursos', '=', $id_curso)->where('profesores', '=', $profesor)->value('id');
             if($curso_profesor == 0)
@@ -241,18 +241,12 @@ class AlumnosController extends Controller
                 ]);
 
             }
-            return redirect()->action([AlumnosController::class, 'store_profesor2']);
-            // $r = $request->all();
-            // return $r;
-        }
-        public function store_profesor2()
-        {
 
-            $titulo_p1 = $request->input('titulos_p1');
-            $titulo_p2 = $request->input('titulos_p2');
-            $titulo_p3 = $request->input('titulos_p3');
-            $titulo_p4 = $request->input('titulos_p4');
-            $titulo_p5 = $request->input('titulos_p5');
+            $titulo_p1 = $request->input('titulo_p1');
+            $titulo_p2 = $request->input('titulo_p2');
+            $titulo_p3 = $request->input('titulo_p3');
+            $titulo_p4 = $request->input('titulo_p4');
+            $titulo_p5 = $request->input('titulo_p5');
 
             $materias = $request->input('materias_p');
 
@@ -267,7 +261,7 @@ class AlumnosController extends Controller
             ]);
 
             //titulo p2
-            if($request->has('titulo_p2'))
+            if($titulo_p2 != NULL)
             {
                 $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
                 DB::table('pivot_titulos_profesores')->insert([
@@ -277,7 +271,7 @@ class AlumnosController extends Controller
             }
 
             //titulo p3
-            if($request->has('titulo_p3'))
+            if($titulo_p3 != NULL)
             {
                 $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
                 DB::table('pivot_titulos_profesores')->insert([
@@ -287,7 +281,7 @@ class AlumnosController extends Controller
             }
 
             //titulo p4
-            if($request->has('titulo_p4'))
+            if($titulo_p4 != NULL)
             {
                 $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
                 DB::table('pivot_titulos_profesores')->insert([
@@ -296,7 +290,7 @@ class AlumnosController extends Controller
                 ]);
             }
             //titulo p5
-            if($request->has('titulo_p5'))
+            if($titulo_p5 != NULL)
             {
                 $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
                 DB::table('pivot_titulos_profesores')->insert([
@@ -325,6 +319,10 @@ class AlumnosController extends Controller
                         'profesores' => $profesor
                     ]);
             }
+        }
+        public function store_profesor2()
+        {
+
         }
     // --------------- Read ---------------
 

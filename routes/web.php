@@ -24,8 +24,8 @@ Route::controller(AlumnosController::class)->group(function () {
 
     //Profesor
     Route::get('/Profesor/','create_profesor')->name('Profesor');
-    Route::post('/guardar-profesor2/','store_profesor2')->name('store-profesor2');
     Route::post('/guardar-profesor/','store_profesor')->name('store-profesor');
+    Route::get('/guardar-profesor2/','store_profesor2')->name('store-profesor2');
 
     //Buscador
     Route::get('/buscar/','buscador')->name('buscador');
