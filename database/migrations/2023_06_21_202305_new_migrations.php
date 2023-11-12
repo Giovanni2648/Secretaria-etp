@@ -28,7 +28,5 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('alumnos');
-        Schema::dropIfExists('pivot_titulos_profesores');
     }
 };

@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 use Illuminate\Database\Query\Builder;
 use App\Models\alumnos;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\MessageBag;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
+
 use Illuminate\Support\Arr;
 class AlumnosController extends Controller
 {
@@ -211,9 +212,11 @@ class AlumnosController extends Controller
             $curso = $request->input('curso_p');
             $division = $request->input('division_p');
             $id_curso = DB::table('cursos')->where('curso', '=', $curso)->where('division', '=', $division)->value('id');
+            $curso = "curso_p";
+            while($curso)
+            {
 
-            $coleccion = $request->collect();
-            return $coleccion;
+            }
             //insertar profesor
 
             $profesor = 0;
