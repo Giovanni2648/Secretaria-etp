@@ -19,7 +19,7 @@ Route::controller(AlumnosController::class)->group(function () {
 
     Route::get('/eliminar/','eliminar')->name('eliminar');
     //Alumno
-    Route::get('/alumno/','create_alumno')->name('alumno');
+    Route::get('/alumno/','create_alumno',['alumno' => true])->name('alumno');
     Route::post('/guardar-alumno/','store_alumno')->name('store-alumno');
 
     //Profesor

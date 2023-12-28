@@ -35,10 +35,10 @@ class AlumnosController extends Controller
             $div_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('division');
             $alumno->cursos = $curso_cursos."° ".$div_cursos."°";
         }
-
+        $materias = DB::table('materias')->orderBy('materia')->paginate(5);
         $tutor = DB::table('tutor')->paginate(2);
         $profesores = DB::table('profesores')->paginate(15);
-        return view('welcome')->with('alumnos', $alumnos)->with('tutor', $tutor)->with('profesores', $profesores);
+        return view('welcome')->with('alumnos', $alumnos)->with('tutor', $tutor)->with('profesores', $profesores)->with('materias', $materias);;
     }
 
     public  function buscador(Request $request)
@@ -115,8 +115,7 @@ class AlumnosController extends Controller
             $validated = $request->validate([
                 'nombre' =>'required|max:100|min:3',
                 'apellido' =>'required|max:100|min:3',
-                'edad' => 'required|numeric',
-                'dni' => 'required|numeric|digits:7',
+                'dni' => 'required|numeric|digits:8',
                 'telefono' => 'required|numeric|digits:10',
                 'nacimiento' => 'required',
                 'curso' => 'required|exists:cursos,curso',
@@ -189,8 +188,7 @@ class AlumnosController extends Controller
 
     public function create_profesor()
     {
-        $materias = DB::table('materias')->orderBy('materia')->paginate(5);
-        return view('crear_profesor')->with('materias', $materias);
+
     }
 
     public function store_profesor(Request $request)
