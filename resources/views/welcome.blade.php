@@ -48,10 +48,24 @@
         </div>
       </nav>
     <br>
-    @if ($errors->any())
+    @if ($errors->tutor->any())
         <div class="alert alert-danger">
             <ul>
-                <h3>Error al insertar el registro</h3>
+                <h3>Error al insertar el Tutor en el registro</h3>
+            </ul>
+        </div>
+    @endif
+    @if ($errors->usuario->any())
+        <div class="alert alert-danger">
+            <ul>
+                <h3>Error al insertar el Alumno en el registro</h3>
+            </ul>
+        </div>
+    @endif
+    @if ($errors->profesor->any())
+        <div class="alert alert-danger">
+            <ul>
+                <h3>Error al insertar el Profesor en el registro</h3>
             </ul>
         </div>
     @endif

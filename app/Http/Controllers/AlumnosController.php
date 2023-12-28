@@ -1,8 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
-use Illuminate\Database\Query\Builder;
 use App\Models\alumnos;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
+use Illuminate\Validation\Rule;
 
 use Illuminate\Support\Arr;
 class AlumnosController extends Controller
@@ -107,69 +108,71 @@ class AlumnosController extends Controller
 
     // --------------- Create ---------------
 
-public function store_alumno(Request $request)
-{
-    $validator =Validator::make($request->all(), [
-        'nombre' => 'required|max:100|min:3',
-        'apellido' => 'required|max:100|min:3',
-        'dni' => 'required|numeric|digits:8',
-        'telefono' => 'required|numeric|digits:10',
-        'nacimiento' => 'required',
-        'curso' => 'required|exists:cursos|curso',
-        'division' => 'required_with:curso|exists:cursos,division',
-    ])->validate('usuario');
-    return response(['usuario' => $validator->errors()], 201);
-    //Alumnos
-    $nombre = $request->input('nombre');
-    $apellido = $request->input('apellido');
-    $dni = $request->input('dni');
-    $nacimiento = $request->input('nacimiento');
-    $telefono = $request->input('telefono');
-
-    //curso
-    $curso = $request->input('curso');
-    $division = $request->input('division');
-    $id_curso = 0;
-    $id_curso = DB::table('cursos')->where('division','=',$division)->where('curso','=',$curso)->value('id');
-    if($id_curso == 0)
+    public function store_alumno(Request $request)
     {
-        DB::table('cursos')->insert([
-            'curso' => $curso,
-            'division' => $division
+        $validator = Validator::make($request->all(), [
+            'nombre' => 'required|max:100|min:3',
+            'apellido' => 'required|max:100|min:3',
+            'dni' => 'required|unique:alumnos,dni|numeric|digits:8',
+            'telefono' => 'required|numeric|digits:10',
+            'nacimiento' => 'required',
+            'curso' => 'required|exists:cursos|numeric',
+            'division' => 'required_with:curso|exists:cursos,division|numeric',
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('index')->withErrors($validator, 'usuario')->withInput();
+        }
+        //Alumnos
+        $nombre = $request->input('nombre');
+        $apellido = $request->input('apellido');
+        $dni = $request->input('dni');
+        $nacimiento = $request->input('nacimiento');
+        $telefono = $request->input('telefono');
+
+        //curso
+        $curso = $request->input('curso');
+        $division = $request->input('division');
+        $id_curso = 0;
         $id_curso = DB::table('cursos')->where('division','=',$division)->where('curso','=',$curso)->value('id');
-    }
+        if($id_curso == 0)
+        {
+            DB::table('cursos')->insert([
+                'curso' => $curso,
+                'division' => $division
+            ]);
+            $id_curso = DB::table('cursos')->where('division','=',$division)->where('curso','=',$curso)->value('id');
+        }
 
-    $alumnos = 0;
-    $alumnos = DB::table('alumnos')->where('dni','=',$dni)->value('id');
-    if($alumnos == 0)
-    {
-        DB::table('alumnos')->insert([
-            'nombre' => $nombre,
-            'apellido' => $apellido,
-            'dni' => $dni,
-            'telefono' => $telefono,
-            'nacimiento' => $nacimiento,
-            'tutor' => $tutor, //hacer algoritmo de filtrado
-            'cursos' => $id_curso, //hacer algoritmo de filtrado
-        ]);
-        return  $nombre;
+        $alumnos = 0;
+        $alumnos = DB::table('alumnos')->where('dni','=',$dni)->value('id');
+        if($alumnos == 0)
+        {
+            DB::table('alumnos')->insert([
+                'nombre' => $nombre,
+                'apellido' => $apellido,
+                'dni' => $dni,
+                'telefono' => $telefono,
+                'nacimiento' => $nacimiento,
+                'tutor' => $tutor, //hacer algoritmo de filtrado
+                'cursos' => $id_curso, //hacer algoritmo de filtrado
+            ]);
+            return  $nombre;
+        }
     }
-    else
-    {
-         return "el alumno ya esta en el sistema";
-    }
-}
 
     public function store_tutor(Request $request)
     {
-            $validated = $request->validate([
+            $validator = Validator::make($request->all(),[
                 'nombre_t' =>'required|max:100|min:3',
                 'apellido_t' =>'required|max:100|min:3',
-                'dni_t' => 'required|numeric|digits:8',
+                'dni_t' => 'required|unique:tutor,dni|numeric|digits:8',
                 'telefono_t' => 'required|numeric|digits:10',
             ]);
 
+            if ($validator->fails()) {
+                return redirect()->route('index')->withErrors($validator, 'tutor')->withInput();
+            }
             //Tutor
             $nombre_t = $request->input('nombre_t');
             $apellido_t = $request->input('apellido_t');
@@ -196,7 +199,7 @@ public function store_alumno(Request $request)
 
     public function store_profesor(Request $request)
     {
-        $validated = $request->validate([
+        $validator = Validator::make($request->all(), [
             'nombre_p' =>'required|max:100|min:3',
             'apellido_p' =>'required|max:100|min:3',
             'dni_p' => 'required|numeric|digits:8',
@@ -205,6 +208,9 @@ public function store_alumno(Request $request)
             'division_p' => 'required_with:curso||exists:cursos,division',
             'titulo_p1' => 'required|min:5',
         ]);
+        if ($validator->fails()) {
+            return redirect()->route('index')->withErrors($validator, 'profesor')->withInput();
+        }
             $nombre = $request->input('nombre_p');
             $apellido = $request->input('apellido_p');
             $dni = $request->input('dni_p');
