@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
+use App\Http\Controllers\AlumnosController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -12,21 +12,21 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
-use App\Http\Controllers\AlumnosController;
 
 Route::controller(AlumnosController::class)->group(function () {
     Route::get('/', 'index')->name('index');
-
     Route::get('/eliminar/','eliminar')->name('eliminar');
     //Alumno
+    //Route::get('dashboard-alumnos/',function (){
+    //        return view('welcome')->fragmentIf($request->hasHeader('HX-Request'),['dashboard_alumnos']);})->name('dashboard-alumnos');
     Route::post('/guardar-alumno/','store_alumno')->name('store-alumno');
 
     //Tutor
     Route::post('/guardar-tutor/','store_tutor')->name('store-tutor');
 
     //Profesor
+    Route::post('/crear-profesor/','create_profesor')->name('create-profesor');
     Route::post('/guardar-profesor/','store_profesor')->name('store-profesor');
-    Route::get('/guardar-profesor2/','store_profesor2')->name('store-profesor2');
 
     //Buscador
     Route::get('/buscar/','buscador')->name('buscador');

@@ -5,7 +5,7 @@ use App\Models\alumnos;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\MessageBag;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Route;
@@ -38,10 +38,10 @@ class AlumnosController extends Controller
             $div_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('division');
             $alumno->cursos = $curso_cursos."° ".$div_cursos."°";
         }
-        $materias = DB::table('materias')->orderBy('materia')->paginate(5);
-        $tutor = DB::table('tutor')->paginate(2);
-        $profesores = DB::table('profesores')->paginate(15);
-        return view('welcome')->with('alumnos', $alumnos)->with('tutor', $tutor)->with('profesores', $profesores)->with('materias', $materias);;
+        $materias = DB::table('materias')->orderBy('materia')->simplePaginate($perPage = 5,$columns = ['*'] ,$pageName = "materias");
+        $tutor = DB::table('tutor')->paginate($perPage = 5,$columns = ['*'] ,$pageName = "tutores");
+        $profesores = DB::table('profesores')->paginate($perPage = 5,$columns = ['*'] ,$pageName = "profesores");
+        return view('welcome')->with('alumnos', $alumnos)->with('tutor', $tutor)->with('profesores', $profesores)->with('materias', $materias)->fragmentIf($request->hasHeader('HX-Request'),'dashboard_alumnos');
     }
 
     public  function buscador(Request $request)
@@ -114,6 +114,7 @@ class AlumnosController extends Controller
             'nombre' => 'required|max:100|min:3',
             'apellido' => 'required|max:100|min:3',
             'dni' => 'required|unique:alumnos,dni|numeric|digits:8',
+            'dni_t' => 'required|exists:tutor,dni|numeric|digits:8',
             'telefono' => 'required|numeric|digits:10',
             'nacimiento' => 'required',
             'curso' => 'required|exists:cursos|numeric',
@@ -127,10 +128,13 @@ class AlumnosController extends Controller
         $nombre = $request->input('nombre');
         $apellido = $request->input('apellido');
         $dni = $request->input('dni');
+        $dni_t = $request->input('dni_t');
         $nacimiento = $request->input('nacimiento');
         $telefono = $request->input('telefono');
 
-        //curso
+        //Tutor
+        $tutor = DB::table('tutor')->where('dni','=',$dni_t)->value('id');
+        //Curso
         $curso = $request->input('curso');
         $division = $request->input('division');
         $id_curso = 0;
@@ -154,8 +158,8 @@ class AlumnosController extends Controller
                 'dni' => $dni,
                 'telefono' => $telefono,
                 'nacimiento' => $nacimiento,
-                'tutor' => $tutor, //hacer algoritmo de filtrado
-                'cursos' => $id_curso, //hacer algoritmo de filtrado
+                'tutor' => $tutor,
+                'cursos' => $id_curso,
             ]);
             return  $nombre;
         }
@@ -196,7 +200,6 @@ class AlumnosController extends Controller
                  return "el alumno ya esta en el sistema";
             }
     }
-
     public function store_profesor(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -206,7 +209,7 @@ class AlumnosController extends Controller
             'telefono_p' => 'required|numeric|digits:10',
             'curso_p' => 'required|exists:cursos,curso',
             'division_p' => 'required_with:curso||exists:cursos,division',
-            'titulo_p1' => 'required|min:5',
+            'titulo' => 'required|min:5',
         ]);
         if ($validator->fails()) {
             return redirect()->route('index')->withErrors($validator, 'profesor')->withInput();
@@ -215,15 +218,11 @@ class AlumnosController extends Controller
             $apellido = $request->input('apellido_p');
             $dni = $request->input('dni_p');
             $telefono = $request->input('telefono_p');
+            $titulos = $request->input('titulo');
+            $materias = $request->input('materias_p');
 
-            $curso = $request->input('curso_p');
-            $division = $request->input('division_p');
-            $id_curso = DB::table('cursos')->where('curso', '=', $curso)->where('division', '=', $division)->value('id');
-            $curso = "curso_p";
-            while($curso)
-            {
-
-            }
+            $cursos = $request->input('curso_p');
+            $divisiones = $request->input('division_p');
             //insertar profesor
 
             $profesor = 0;
@@ -241,72 +240,56 @@ class AlumnosController extends Controller
             }
 
             //insertar Curso - Profesor
+            if (!empty($cursos)) {
+                $cursos = array_filter($cursos, static function ($item) {
+                    return !empty($item);
+                });
+            }
+            if (!empty($divisiones)) {
+                $divisiones = array_filter($divisiones, static function ($item) {
+                    return !empty($item);
+                });
+            }
+
+            $id_cursos = array();
+
+            foreach ($cursos as $indice_curso => $curso) {
+                foreach ($divisiones as $indice_division => $division) {
+                    if($indice_curso == $indice_division)
+                    {    
+                        $id_curso = DB::table('cursos')->where('curso', '=', $curso)->where('division', '=', $division)->value('id');
+                        $id_cursos[] = $id_curso;
+                    }
+                }
+            }
+
             $curso_profesor = 0;
             $curso_profesor = DB::table('pivot_cursos_profesores')->where('cursos', '=', $id_curso)->where('profesores', '=', $profesor)->value('id');
             if($curso_profesor == 0)
             {
-                DB::table('pivot_cursos_profesores')->insert([
-                    'cursos' => $id_curso,
-                    'profesores' => $profesor,
-                ]);
+                foreach($id_cursos as $id_curso)
+                {
+                    DB::table('pivot_cursos_profesores')->insert([
+                        'cursos' => $id_curso,
+                        'profesores' => $profesor,
+                    ]);
+                }
 
             }
-
-            $titulo_p1 = $request->input('titulo_p1');
-            $titulo_p2 = $request->input('titulo_p2');
-            $titulo_p3 = $request->input('titulo_p3');
-            $titulo_p4 = $request->input('titulo_p4');
-            $titulo_p5 = $request->input('titulo_p5');
-
-            $materias = $request->input('materias_p');
 
             //Insertar Titulos
-
-
-            //titulo p1
-            $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
-            DB::table('pivot_titulos_profesores')->insert([
-                'titulo' => $titulo_p1,
-                'profesores' => $profesor
-            ]);
-
-            //titulo p2
-            if($titulo_p2 != NULL)
-            {
-                $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
-                DB::table('pivot_titulos_profesores')->insert([
-                    'titulo' => $titulo_p2,
-                    'profesores' => $profesor
-                ]);
+            if (!empty($titulos)) {
+                $titulos = array_filter($titulos, static function ($item) {
+                    return !empty($item);
+                });
             }
-
-            //titulo p3
-            if($titulo_p3 != NULL)
+            foreach($titulos as $titulo)
             {
                 $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
                 DB::table('pivot_titulos_profesores')->insert([
-                    'titulo' => $titulo_p3,
+                    'titulo' => $titulo,
                     'profesores' => $profesor
-                ]);
-            }
-
-            //titulo p4
-            if($titulo_p4 != NULL)
-            {
-                $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
-                DB::table('pivot_titulos_profesores')->insert([
-                    'titulo' => $titulo_p4,
-                    'profesores' => $profesor
-                ]);
-            }
-            //titulo p5
-            if($titulo_p5 != NULL)
-            {
-                $profesor = DB::table('profesores')->where('dni','=',$dni)->where('nombre','=',$nombre)->where('apellido','=',$apellido)->value('id');
-                DB::table('pivot_titulos_profesores')->insert([
-                    'titulo' => $titulo_p5,
-                    'profesores' => $profesor
-                ]);
+                ]); 
             }
 
             //Insertar Materias
@@ -330,14 +313,7 @@ class AlumnosController extends Controller
                     ]);
             }
         }
-        public function store_profesor2()
-        {
-
-        }
-    // --------------- Read ---------------
-
-
-
+    
     // --------------- Update ---------------
 
     public function show_update_alumno(Request $request)
@@ -397,6 +373,7 @@ class AlumnosController extends Controller
         $tutor = DB::table('tutor')->where('id', '=', $id)->get();
         return view('update_tutor')->with('tutor', $tutor);
     }
+
     public function update_tutor(Request $request)
     {
         $validated = $request->validate([
@@ -419,12 +396,14 @@ class AlumnosController extends Controller
         ]);
         return redirect()->route('index');
     }
+
     public function show_update_profesor(Request $request)
     {
         $id = $request->get('id');
         $profesor = DB::table('profesores')->where('id', '=', $id)->get();
         return view('update_profesor')->with('profesor', $profesor);
     }
+
     public function update_profesor(Request $request)
     {
         $validated = $request->validate([
