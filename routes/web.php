@@ -1,7 +1,4 @@
 <?php
-
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AlumnosController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -12,13 +9,14 @@ use App\Http\Controllers\AlumnosController;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AlumnosController;
 
 Route::controller(AlumnosController::class)->group(function () {
     Route::get('/', 'index')->name('index');
     Route::get('/eliminar/','eliminar')->name('eliminar');
     //Alumno
-    //Route::get('dashboard-alumnos/',function (){
-    //        return view('welcome')->fragmentIf($request->hasHeader('HX-Request'),['dashboard_alumnos']);})->name('dashboard-alumnos');
+    Route::get('dashboard-alumnos', 'dashboard_alumnos')->name('dashboard-alumnos');
     Route::post('/guardar-alumno/','store_alumno')->name('store-alumno');
 
     //Tutor
@@ -29,9 +27,9 @@ Route::controller(AlumnosController::class)->group(function () {
     Route::post('/guardar-profesor/','store_profesor')->name('store-profesor');
 
     //Buscador
-    Route::get('/buscar/','buscador')->name('buscador');
+    Route::get('/buscar-alumno/','buscador_alumnos')->name('buscador');
 
-    Route::get('/panel-actualizacion-alumno/','show_update_alumno')->name('show_update_alumno');
+    Route::get('/panel-actualizacion-alumno/{id}','show_update_alumno')->name('show_update_alumno');
     Route::get('/actualizar-alumno/','update_alumno')->name('update_alumno');
 
     Route::get('/panel-actualizacion-tutor/','show_update_tutor')->name('show_update_tutor');
@@ -40,7 +38,7 @@ Route::controller(AlumnosController::class)->group(function () {
     Route::get('/panel-actualizacion-profesor/','show_update_profesor')->name('show_update_profesor');
     Route::get('/actualizar-profesor/','update_profesor')->name('update_profesor');
 
-    Route::get('/eliminar-alumno/','delete_alumno')->name('delete_alumno');
+    Route::get('/eliminar-alumno/{id}','delete_alumno')->name('delete_alumno');
     Route::get('/eliminar-tutor/','delete_tutor')->name('delete_tutor');
     Route::get('/eliminar-profesor/','delete_profesor')->name('delete_profesor');
 });

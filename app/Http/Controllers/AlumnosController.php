@@ -3,81 +3,30 @@
 namespace App\Http\Controllers;
 use App\Models\alumnos;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
-use Illuminate\Support\MessageBag;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
-use Illuminate\Validation\Rule;
-
-use Illuminate\Support\Arr;
 class AlumnosController extends Controller
 {
 
-    public function eliminar()
-    {
-        return "";
-    }
+    // public function eliminar()
+    // {
+    //     return "";
+    // }
 
     public function index(Request $request)
     {
-        $alumnos = DB::table('alumnos')->paginate(15);
-        foreach($alumnos as $alumno)
-        {
-            $id_tutor = $alumno->tutor;
-            $nombre_tutor;
-            $nombre_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('nombre');
-            $apellido_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('apellido');
-            $alumno->tutor =$nombre_tutor." ".$apellido_tutor;
-
-            $id_curso = $alumno->cursos;
-            $curso_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('curso');
-            $div_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('division');
-            $alumno->cursos = $curso_cursos."° ".$div_cursos."°";
-        }
         $materias = DB::table('materias')->orderBy('materia')->simplePaginate($perPage = 5,$columns = ['*'] ,$pageName = "materias");
         $tutor = DB::table('tutor')->paginate($perPage = 5,$columns = ['*'] ,$pageName = "tutores");
         $profesores = DB::table('profesores')->paginate($perPage = 5,$columns = ['*'] ,$pageName = "profesores");
-        return view('welcome')->with('alumnos', $alumnos)->with('tutor', $tutor)->with('profesores', $profesores)->with('materias', $materias)->fragmentIf($request->hasHeader('HX-Request'),'dashboard_alumnos');
+        return view('components.index.index')->with('tutor', $tutor)->with('profesores', $profesores)->with('materias', $materias);
     }
 
     public  function buscador(Request $request)
     {
-        //Alumno
-        $nombre_alumno = $request->input('buscador_alumno_nombre');
-        $apellido_alumno = $request->input('buscador_alumno_apellido');
-        $curso_alumno = $request->input('buscador_alumno_curso');
-        $division_alumno = $request->input('buscador_alumno_division');
-        if($nombre_alumno != NULL && $apellido_alumno != NULL && $curso_alumno != NULL && $division_alumno != NULL)
-        {
-            $id_curso = 0;
-            $id_curso = DB::table('cursos')->where('curso','=', $curso_alumno)->where('division', '=', $division_alumno)->value('id');
-            if($id_curso != 0)
-            {
-                $alumno = DB::table('alumnos')->where('nombre','=',$nombre_alumno)->where('apellido','=',$apellido_alumno)->where('cursos','=',$id_curso)->paginate();
-            }
-            foreach($alumno as $a)
-            {
-                $id_tutor = $a->tutor;
-                $nombre_tutor;
-                $nombre_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('nombre');
-                $apellido_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('apellido');
-                $a->tutor =$nombre_tutor." ".$apellido_tutor;
-
-                $id_curso = $a->cursos;
-                $curso_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('curso');
-                $div_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('division');
-                $a->cursos = $curso_cursos."° ".$div_cursos."°";
-            }
-        }
-        else
-        {
-            $alumno = DB::table('alumnos')->paginate(10);
-        }
-
         //Tutor
         $nombre_tutor = $request->input('buscador_nombre_tutor');
         $apellido_tutor = $request->input('buscador_apellido_tutor');
@@ -103,9 +52,69 @@ class AlumnosController extends Controller
         {
             $profesores = DB::table('profesores')->paginate(10);
         }
-        return view('welcome')->with('alumnos', $alumno)->with('tutor', $tutor)->with('profesores', $profesores);
+        return view('components.alumnos.dashboard-alumnos')->with('alumnos', $alumno)->with('tutor', $tutor)->with('profesores', $profesores);
+    }
+    // --------------- Dashboards ---------------
+    public function dashboard_alumnos(Request $request)
+    {
+        $alumnos = DB::table('alumnos')->paginate(15);
+        foreach($alumnos as $alumno)
+        {
+            $id_tutor = $alumno->tutor;
+            $nombre_tutor;
+            $nombre_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('nombre');
+            $apellido_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('apellido');
+            $alumno->tutor =$nombre_tutor." ".$apellido_tutor;
+
+            $id_curso = $alumno->cursos;
+            $curso_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('curso');
+            $div_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('division');
+            $alumno->cursos = $curso_cursos."° ".$div_cursos."°";
+        }
+        $alumnos = DB::table('alumnos')->paginate(10);
+        return view('components.alumnos.dashboard-alumnos')->with('alumnos', $alumnos);
     }
 
+    public function buscador_alumnos(Request $request)
+    {
+        $nombre = $request->input('buscador_nombre');
+        $apellido = $request->input('buscador_apellido');
+        $dni = $request->input('buscador_dni');
+        $curso = $request->input('buscador_curso');
+        $division = $request->input('buscador_division');
+
+        if(isset($nombre))
+        {
+            $alumnos = DB::table('alumnos')->where('nombre','=', $nombre);
+        }
+        if(isset($apellido))
+        {
+            $alumnos = DB::table('alumnos')->where('apellido','=', $apellido);
+        }
+        if(isset($dni))
+        {
+            $alumnos = DB::table('alumnos')->where('dni','=', $dni);
+        }
+        if(isset($curso) && isset($division))
+        {
+            $id_curso = DB::table('cursos')->where('curso','=', $curso)->where('division','=', $division)->value('id');
+            $alumnos = DB::table('alumnos')->where('cursos','=',$id_curso)->paginate(10);
+            foreach($alumnos as $alumno)
+            {
+                $id_tutor = $alumno->tutor;
+                $nombre_tutor;
+                $nombre_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('nombre');
+                $apellido_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('apellido');
+                $alumno->tutor =$nombre_tutor." ".$apellido_tutor;
+
+                $id_curso = $alumno->cursos;
+                $curso_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('curso');
+                $div_cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('division');
+                $alumno->cursos = $curso_cursos."° ".$div_cursos."°";
+            }
+        }
+        return view('components.alumnos.dashboard-alumnos')->with('alumnos', $alumnos);
+    }
     // --------------- Create ---------------
 
     public function store_alumno(Request $request)
@@ -122,7 +131,7 @@ class AlumnosController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('index')->withErrors($validator, 'usuario')->withInput();
+            return redirect()->route('dashboard-alumnos')->withErrors($validator, 'usuario')->withInput();
         }
         //Alumnos
         $nombre = $request->input('nombre');
@@ -161,7 +170,6 @@ class AlumnosController extends Controller
                 'tutor' => $tutor,
                 'cursos' => $id_curso,
             ]);
-            return  $nombre;
         }
     }
 
@@ -316,19 +324,21 @@ class AlumnosController extends Controller
     
     // --------------- Update ---------------
 
-    public function show_update_alumno(Request $request)
+    public function show_update_alumno(string $id)
     {
-        $id = $request->get('id');
-        $alumno = DB::table('alumnos')->where('id', '=', $id)->get();
-        foreach($alumno as $a)
+        $alumnos = DB::table('alumnos')->where('id', '=', $id)->get();
+        foreach($alumnos as $alumno)
         {
-            $id_tutor = $a->tutor;
+            $id_tutor = $alumno->tutor;
             $nombre_tutor;
             $nombre_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('nombre');
             $apellido_tutor = DB::table('tutor')->where('id', '=', $id_tutor)->value('apellido');
-            $a->tutor =$nombre_tutor." ".$apellido_tutor;
+            $alumno->tutor =$nombre_tutor." ".$apellido_tutor;
+            $id_curso = $alumno->cursos;
+            $cursos = DB::table('cursos')->where('id', '=', $id_curso)->value('curso');
+            $divisiones = DB::table('cursos')->where('id', '=', $id_curso)->value('division');
         }
-        return view('update_alumno')->with('alumno', $alumno);
+        return view('update.update_alumno')->with('alumnos', $alumnos)->with('cursos', $cursos)->with('divisiones', $divisiones);
     }
 
     public function update_alumno(Request $request)
@@ -336,23 +346,21 @@ class AlumnosController extends Controller
         $validated = $request->validate([
             'nombre' =>'required|max:100|min:3',
             'apellido' =>'required|max:100|min:3',
-            'edad' => 'required|numeric',
-            'dni' => 'required|numeric|digits:7',
+            'dni' => 'required|numeric|digits:8',
             'telefono' => 'required|numeric|digits:10',
             'nacimiento' => 'required',
             'curso' => 'required|exists:cursos,curso',
             'division' => 'required_with:curso||exists:cursos,division',
         ]);
 
-        $nombre = $request->input('nombre_a');
-        $apellido = $request->input('apellido_a');
-        $dni = $request->input('dni_a');
-        $telefono = $request->input('telefono_a');
-        $edad = $request->input('edad_a');
-        $nacimiento = $request->input('nacimiento_a');
+        $nombre = $request->input('nombre');
+        $apellido = $request->input('apellido');
+        $dni = $request->input('dni');
+        $telefono = $request->input('telefono');
+        $nacimiento = $request->input('nacimiento');
 
-        $curso = $request->input('curso_a');
-        $division = $request->input('division_a');
+        $curso = $request->input('curso');
+        $division = $request->input('division');
         $id_curso = DB::table('cursos')->where('curso','=',$curso)->where('division', '=', $division)->value('id');
         $id = $request->input('id');
         $alumno = DB::table('alumnos')->where('id', '=', $id)->update([
@@ -360,11 +368,10 @@ class AlumnosController extends Controller
             'apellido' => $apellido,
             'dni' => $dni,
             'telefono' => $telefono,
-            'edad' => $edad,
             'nacimiento' => $nacimiento,
             'cursos' => $id_curso,
         ]);
-        return redirect()->route('index');
+        return redirect()->route('dashboard-alumnos');
     }
 
     public function show_update_tutor(Request $request)
@@ -431,11 +438,10 @@ class AlumnosController extends Controller
     }
     // --------------- Delete ---------------
 
-    public function delete_alumno(Request $request)
+    public function delete_alumno(string $id)
     {
-        $id = $request->input('id');
         DB::table('alumnos')->where('id','=',$id)->delete();
-        return redirect()->route('index');
+        return redirect()->route('dashboard-alumnos');
     }
 
     public function delete_tutor(Request $request)
